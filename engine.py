@@ -14,13 +14,13 @@ def train(train_loader, model, optimizer, device, i):
     # cross entropy loss
     criterion = nn.CrossEntropyLoss()
 
-    j = 0
+    #j = 0
 
     for data in train_loader:
-        j += 1
+        #j += 1
 
-        if i == j:
-            break
+        #if i == j:
+         #   break
         
         print(data[0].shape, data[1].shape)
         print("\n")
@@ -51,7 +51,7 @@ def train(train_loader, model, optimizer, device, i):
         optimizer.step()
 
         
-        #break
+        
     
 
         """
