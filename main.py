@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 from dataset import CIFAR10_dataset
 import engine 
+import expt_engine
 import torch.optim as optim
 from utils import Accuracy
 
@@ -58,10 +59,10 @@ def main():
     for epoch in range(args.num_epochs):
         print(f'epoch :-{epoch}')
 
-        engine.train(train_loader, model, optimizer, device, args.i)
+        #engine.train(train_loader, model, optimizer, device, args.i)
         
         
-        final_output, final_label, training_loss = engine.train(train_loader, model, optimizer, device)
+        final_output, final_label, training_loss = expt_engine.train(train_loader, model, optimizer, device)
 
         top1_training_accuracy = Accuracy(final_label, final_output)
 

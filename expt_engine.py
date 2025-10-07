@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-def train(train_loader, model, optimizer, device, i):
+def train(train_loader, model, optimizer, device):
     model.train()
     criterion = nn.CrossEntropyLoss()
     
@@ -31,7 +31,8 @@ def train(train_loader, model, optimizer, device, i):
         # Print progress every 50 batches
         if batch_idx % 50 == 0:
             print(f'Batch {batch_idx}/{len(train_loader)}, Loss: {loss.item():.4f}')
-    
+        
+        
     # Concatenate all results (on GPU first)
     all_predictions = torch.cat(all_predictions)
     all_labels = torch.cat(all_labels)
