@@ -15,6 +15,9 @@ def train(train_loader, model, optimizer, device):
     criterion = nn.CrossEntropyLoss()
 
     for data in train_loader:
+
+        print(data[0].shape, data[1].shape)
+
         feature = data[0]
         label = data[1]
 
@@ -38,6 +41,11 @@ def train(train_loader, model, optimizer, device):
         # update the weights
         optimizer.step()
 
+        
+        break
+    
+
+        """
         softmax_values = F.softmax(outputs, dim=1)
         outputs = torch.argmax(softmax_values, dim=1).int()
 
@@ -46,4 +54,5 @@ def train(train_loader, model, optimizer, device):
         final_label.extend(label.detach().cpu().tolist())
 
     return final_output, final_label, sum(train_loss_list)/len(train_loss_list)
+"""
 

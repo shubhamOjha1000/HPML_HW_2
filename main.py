@@ -35,8 +35,10 @@ def main():
 
     if args.device == 'cuda' and torch.cuda.is_available():
         device = torch.device('cuda')
+        print('cuda use')
     else:
         device = torch.device('cpu')
+        print('cpu use')
 
     # model :- 
     if args.model == 'RESNET18':
@@ -55,12 +57,16 @@ def main():
     for epoch in range(args.num_epochs):
         print(f'epoch :-{epoch}')
 
+        engine.train(train_loader, model, optimizer, device)
+        print(f'trainig completed')
+        """
         final_output, final_label, training_loss = engine.train(train_loader, model, optimizer, device)
 
         top1_training_accuracy = Accuracy(final_label, final_output)
 
         print(f'training loss :- {training_loss}')
         print(f'top1 training accuracy :- {top1_training_accuracy}')
+        """
 
 
 
