@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-def train(train_loader, model, optimizer, device):
+def train(train_loader, model, optimizer, device, i):
 
     train_loss_list = []
     final_output = []
@@ -14,9 +14,16 @@ def train(train_loader, model, optimizer, device):
     # cross entropy loss
     criterion = nn.CrossEntropyLoss()
 
-    for data in train_loader:
+    j = 0
 
+    for data in train_loader:
+        j += 1
+
+        if i == j:
+            break
+        
         print(data[0].shape, data[1].shape)
+        print("\n")
 
         feature = data[0]
         label = data[1]
@@ -31,6 +38,8 @@ def train(train_loader, model, optimizer, device):
         # calculate loss
         loss = criterion(outputs, label)
         train_loss_list.append(loss)
+        
+        print(f"Loss :- {loss}")
 
          # zero grad the optimizer
         optimizer.zero_grad()
@@ -42,7 +51,7 @@ def train(train_loader, model, optimizer, device):
         optimizer.step()
 
         
-        break
+        #break
     
 
         """

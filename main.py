@@ -22,6 +22,7 @@ def main():
     parser.add_argument('--num_classes', default=10, type=int, help='2:- No of classes in cifar10 dataset')
     parser.add_argument('--model', default='RESNET18', type=str, help='Model to be used')
     parser.add_argument('--device', type=str, default='cpu', choices=['cuda', 'cpu'], help='Device to use for training')
+    parser.add_argument('--i', default=1, type=int, help='How much to run')
     args = parser.parse_args()
 
     # download cifar10 training data
@@ -57,7 +58,7 @@ def main():
     for epoch in range(args.num_epochs):
         print(f'epoch :-{epoch}')
 
-        engine.train(train_loader, model, optimizer, device)
+        engine.train(train_loader, model, optimizer, device, args.i)
         print(f'trainig completed')
         """
         final_output, final_label, training_loss = engine.train(train_loader, model, optimizer, device)
