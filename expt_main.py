@@ -5,13 +5,13 @@ import torch
 from torch.utils.data import DataLoader
 from dataset import CIFAR10_dataset
 import engine 
+import expt_engine
 import torch.optim as optim
 from utils import Accuracy
 
 def main():
-
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_epochs', default=5, type=int, help= 'Number of total training epochs')
+    parser.add_argument('--num_epochs', default=5, type=int, help='Number of total training epochs')
     parser.add_argument('--batch_size', default=128, type=int, help='Batch size for the dataloader')
     parser.add_argument('--num_workers', default=2, type=int, help='num workers for dataloader')
     parser.add_argument('--optimizer', default='SGD', type=str, help='choose between: SGD or Adam')
@@ -28,24 +28,23 @@ def main():
     # download cifar10 training data
     cifar10_training_data = download_cifar10(args.train_data_path)
 
-    #cifar10 Dataset
+    # cifar10 Dataset
     training_data = CIFAR10_dataset(cifar10_training_data, img_transform=True)
 
-    #Dataloader
-    train_loader = DataLoader(training_data, batch_size = args.batch_size, shuffle = True, num_workers = args.num_workers)
+    # Dataloader
+    train_loader = DataLoader(training_data, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 
     if args.device == 'cuda' and torch.cuda.is_available():
         device = torch.device('cuda')
-        print('cuda use')
+        print('Using CUDA')
     else:
         device = torch.device('cpu')
-        print('cpu use')
+        print('Using CPU')
 
-    # model :- 
+    # model
     if args.model == 'RESNET18':
         model = ResNet18(args.num_classes)
         model.to(device)
-        
 
     # set up the optimizer
     if args.optimizer == 'Adam':
@@ -53,27 +52,44 @@ def main():
     elif args.optimizer == 'SGD':
         optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
 
-
+    # Lists to store timing results for each epoch
+    data_loading_times = []
+    training_times = []
+    total_epoch_times = []
 
     for epoch in range(args.num_epochs):
-        print(f'epoch :-{epoch}')
-
-        #engine.train(train_loader, model, optimizer, device, args.i)
+        print(f'Epoch {epoch+1}/{args.num_epochs}')
         
-        
-        final_output, final_label, training_loss = engine.train(train_loader, model, optimizer, device)
+        final_output, final_label, training_loss, data_loading_time, training_time, total_epoch_time = expt_engine.train(
+            train_loader, model, optimizer, device
+        )
 
         top1_training_accuracy = Accuracy(final_label, final_output)
 
-        print(f'training loss :- {training_loss}')
-        print(f'top1 training accuracy :- {top1_training_accuracy}')
-        
+        # Store timing results
+        data_loading_times.append(data_loading_time)
+        training_times.append(training_time)
+        total_epoch_times.append(total_epoch_time)
 
-        print(f'trainig completed')
+        print(f'Training Loss: {training_loss:.4f}')
+        print(f'Top-1 Training Accuracy: {top1_training_accuracy:.4f}')
+        print(f'Data-loading Time: {data_loading_time:.2f} seconds')      # C2.1
+        print(f'Training Time: {training_time:.2f} seconds')              # C2.2
+        print(f'Total Epoch Time: {total_epoch_time:.2f} seconds')        # C2.3
+        print('-' * 50)
 
-
-
-
+    # Print summary after all epochs
+    print('\n=== TIMING SUMMARY ===')
+    for epoch in range(args.num_epochs):
+        print(f'Epoch {epoch+1}:')
+        print(f'  Data-loading: {data_loading_times[epoch]:.2f}s')
+        print(f'  Training: {training_times[epoch]:.2f}s')
+        print(f'  Total: {total_epoch_times[epoch]:.2f}s')
+    
+    print(f'\nAverages over {args.num_epochs} epochs:')
+    print(f'  Data-loading: {sum(data_loading_times)/len(data_loading_times):.2f}s')
+    print(f'  Training: {sum(training_times)/len(training_times):.2f}s')
+    print(f'  Total: {sum(total_epoch_times)/len(total_epoch_times):.2f}s')
 
 if __name__ == '__main__':
     main()

@@ -2,66 +2,41 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-def train(train_loader, model, optimizer, device, i):
-
-    train_loss_list = []
-    final_output = []
-    final_label = []
-
-    # put the model in train mode
+def train(train_loader, model, optimizer, device):
     model.train()
-
-    # cross entropy loss
     criterion = nn.CrossEntropyLoss()
-
-    #j = 0
-
-    for data in train_loader:
-        #j += 1
-
-        #if i == j:
-         #   break
-        
-        print(data[0].shape, data[1].shape)
-        print("\n")
-
-        feature = data[0]
-        label = data[1]
-
-        # Move the tensor to the selected device (CPU or CUDA)
-        feature = feature.to(device)
-        label = label.to(device)
-
-        # do the forward pass through the model
-        outputs = model(feature)
-
-        # calculate loss
-        loss = criterion(outputs, label)
-        train_loss_list.append(loss)
-        
-        print(f"Loss :- {loss}")
-
-         # zero grad the optimizer
-        optimizer.zero_grad()
-
-        # calculate the gradient
-        loss.backward()
-
-        # update the weights
-        optimizer.step()
-
-        
-        
     
-
-        """
-        softmax_values = F.softmax(outputs, dim=1)
-        outputs = torch.argmax(softmax_values, dim=1).int()
-
-        OUTPUTS = outputs.detach().cpu().tolist()
-        final_output.extend(OUTPUTS)
-        final_label.extend(label.detach().cpu().tolist())
-
-    return final_output, final_label, sum(train_loss_list)/len(train_loss_list)
-"""
-
+    total_loss = 0.0
+    all_predictions = []
+    all_labels = []
+    
+    for batch_idx, (features, labels) in enumerate(train_loader):
+        features, labels = features.to(device, non_blocking=True), labels.to(device, non_blocking=True)
+        
+        # Forward pass
+        outputs = model(features)
+        loss = criterion(outputs, labels)
+        total_loss += loss.item()
+        
+        # Backward pass
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        
+        # Collect predictions (on GPU, move to CPU at end)
+        predictions = torch.argmax(outputs, dim=1)
+        all_predictions.append(predictions.detach())
+        all_labels.append(labels.detach())
+        
+        # Print progress every 50 batches
+        if batch_idx % 50 == 0:
+            print(f'Batch {batch_idx}/{len(train_loader)}, Loss: {loss.item():.4f}')
+        
+        
+    # Concatenate all results (on GPU first)
+    all_predictions = torch.cat(all_predictions)
+    all_labels = torch.cat(all_labels)
+    
+    return (all_predictions.cpu().tolist(), 
+            all_labels.cpu().tolist(), 
+            total_loss / len(train_loader))
