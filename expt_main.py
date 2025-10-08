@@ -1,6 +1,6 @@
 import argparse
 from download_CIFAR10_training_data import download_cifar10
-from model import ResNet18
+from model import ResNet18, ResNet18_NoBN
 import torch
 from torch.utils.data import DataLoader
 from dataset import CIFAR10_dataset
@@ -14,7 +14,7 @@ def main():
     parser.add_argument('--num_epochs', default=5, type=int, help='Number of total training epochs')
     parser.add_argument('--batch_size', default=128, type=int, help='Batch size for the dataloader')
     parser.add_argument('--num_workers', default=2, type=int, help='num workers for dataloader')
-    parser.add_argument('--optimizer', default='SGD', type=str, help='choose between: SGD or Adam')
+    parser.add_argument('--optimizer', default='sgd', type=str, help='choose optimize')
     parser.add_argument('--lr', default=0.1, type=float, help='Initial learning rate for optimizer')
     parser.add_argument('--momentum', default=0.1, type=float, help='momentum for optimizer')
     parser.add_argument('--weight_decay', default=5e-4, type=float, help='Weight Decay')
@@ -22,7 +22,8 @@ def main():
     parser.add_argument('--num_classes', default=10, type=int, help='2:- No of classes in cifar10 dataset')
     parser.add_argument('--model', default='RESNET18', type=str, help='Model to be used')
     parser.add_argument('--device', type=str, default='cpu', choices=['cuda', 'cpu'], help='Device to use for training')
-    parser.add_argument('--i', default=1, type=int, help='How much to run')
+    parser.add_argument('--Q3', default=False, type=bool, help='How much to run Q3')
+    parser.add_argument('--Q4', default=False, type=bool, help='How much to run Q4')
     args = parser.parse_args()
 
     # download cifar10 training data
@@ -41,16 +42,79 @@ def main():
         device = torch.device('cpu')
         print('Using CPU')
 
+
+
     # model
     if args.model == 'RESNET18':
         model = ResNet18(args.num_classes)
         model.to(device)
 
-    # set up the optimizer
-    if args.optimizer == 'Adam':
-        optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    elif args.optimizer == 'SGD':
+    elif args.model == 'ResNet18_NoBN':
+        model = ResNet18_NoBN(args.num_classes)
+        model.to(device)
+
+
+    # --- Set up the optimizer ---
+    if args.optimizer.lower() == 'sgd':
         optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+
+    elif args.optimizer.lower() == 'sgd_nesterov':
+        optimizer = optim.SGD(
+            model.parameters(),
+            lr=args.lr,
+            momentum=args.momentum,
+            weight_decay=args.weight_decay,
+            nesterov=True
+        )
+
+    elif args.optimizer.lower() == 'adagrad':
+        optimizer = optim.Adagrad(
+            model.parameters(),
+            lr=args.lr,
+            weight_decay=args.weight_decay
+        )
+
+    elif args.optimizer.lower() == 'adadelta':
+        optimizer = optim.Adadelta(
+            model.parameters(),
+            lr=args.lr,
+            weight_decay=args.weight_decay
+        )
+
+    elif args.optimizer.lower() == 'adam':
+        optimizer = optim.Adam(
+            model.parameters(),
+            lr=args.lr,
+            weight_decay=args.weight_decay
+        )
+
+    else:
+        raise ValueError(f"Unknown optimizer '{args.optimizer}'. Please choose from: "
+                        "'SGD', 'SGD_Nesterov', 'Adagrad', 'Adadelta', 'Adam'")
+    
+
+
+
+    
+        # --- Q3 & Q4: Parameter and Gradient Counting ---
+        # --- Q3 & Q4: Parameter and Gradient Counting ---
+    if args.Q3 or args.Q4:
+        total_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        total_gradients = total_trainable_params  # one gradient per scalar parameter
+
+        print("\n=== MODEL PARAMETER & GRADIENT INFO ===")
+        print(f"Optimizer: {args.optimizer.upper()}")
+        print(f"Total trainable parameters (scalars): {total_trainable_params:,}")
+        print(f"Total gradients (scalars): {total_gradients:,}")
+        print("----------------------------------------\n")
+
+        # Exit after printing for Q3/Q4
+        return
+
+
+
+
+
 
     # Lists to store timing results for each epoch
     data_loading_times = []
